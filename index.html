@@ -1,0 +1,579 @@
+<!doctype html>
+<html lang="ne">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>घर हिसाब</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="घर हिसाब">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#F1F3F6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0E131A" media="(prefers-color-scheme: dark)">
+<meta name="robots" content="noindex">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-180.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: one narrow phone column — header with today's Nepali date, three tabs, then people as rows with a drum-counter reading. */
+:root{
+  --bg:#F1F3F6; --surface:#FFFFFF; --ink:#16202E; --muted:#5A6576; --line:#DCE1E8;
+  --accent:#0F6B5C; --accent-ink:#FFFFFF; --crimson:#C1272D; --good:#1C7A4D; --good-bg:#E3F3EA; --warn:#9A5300; --warn-bg:#FCEFD9; --bad-bg:#FBE4E4;
+  --drum:#1B1E23; --drum-ink:#F4F4F2; --red-drum:#B3262B;
+  --f-ui:"Mukta","Noto Sans Devanagari","Kohinoor Devanagari",system-ui,sans-serif;
+  --f-num:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#0E131A; --surface:#161D27; --ink:#E6EBF2; --muted:#97A3B4; --line:#283242;
+  --accent:#55C2AE; --accent-ink:#0E131A; --crimson:#F0686E; --good:#5EC28C; --good-bg:#14301F; --warn:#E6A24E; --warn-bg:#352611; --bad-bg:#3A1A1C;
+  --drum:#07090C; --drum-ink:#EDEDEA; --red-drum:#A22328; color-scheme:dark }}
+*{box-sizing:border-box}
+html,body{background:var(--bg);margin:0}
+body{color:var(--ink);font-family:var(--f-ui);font-size:17px;line-height:1.45;-webkit-text-size-adjust:100%;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-top:calc(12px + env(safe-area-inset-top,0px));padding-bottom:calc(40px + env(safe-area-inset-bottom,0px))}
+[hidden]{display:none!important}
+img{max-width:100%}
+.wrap{max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1,h2,h3{margin:0;text-wrap:balance;font-weight:700}
+h1{font-size:1.5rem;line-height:1.2}
+h2{font-size:1.15rem}
+p{margin:0}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.num{font-family:var(--f-num);font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+.small{font-size:.9rem}
+
+header.top{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;padding-top:4px}
+.today{font-size:.95rem;color:var(--muted);text-align:right}
+.today b{color:var(--ink);font-weight:600;display:block;font-size:1.05rem}
+
+nav.tabs{display:grid;grid-template-columns:repeat(3,1fr);background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:4px;gap:4px}
+nav.tabs button{border:0;background:transparent;padding:10px 4px;border-radius:9px;font-weight:600;color:var(--muted)}
+nav.tabs button[aria-selected="true"]{background:var(--accent);color:var(--accent-ink)}
+
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px}
+.notice{padding:12px 14px;border-radius:12px;background:var(--warn-bg);color:var(--ink);font-size:.95rem;display:flex;gap:10px;align-items:center}
+.notice.bad{background:var(--bad-bg)}
+.notice.ok{background:var(--good-bg)}
+.notices{display:flex;flex-direction:column;gap:8px}
+
+.summary{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:14px 16px}
+.summary .big{font-size:1.6rem;font-weight:700;line-height:1.1}
+
+.people{list-style:none;margin:0;padding:0}
+.person{padding:14px 16px;display:grid;grid-template-columns:1fr auto;gap:6px 12px;border-top:1px solid var(--line)}
+.person .who{min-width:0}
+.person .who h3{font-size:1.1rem}
+.amt{text-align:right}
+.amt .rs{font-size:1.35rem;font-weight:700;line-height:1.1}
+.calc{grid-column:1/-1;font-size:.92rem;color:var(--muted)}
+.row-actions{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.check{grid-column:1/-1;display:flex;flex-direction:column;gap:8px;padding:10px;border-radius:10px;background:var(--warn-bg)}
+.check img{max-height:110px;object-fit:contain;background:var(--drum);border-radius:8px;width:100%}
+.check .edit{display:flex;gap:8px;flex-wrap:wrap}
+.check input{font-family:var(--f-num);font-size:1.1rem;padding:8px 10px;border:1.5px solid var(--line);border-radius:10px;background:var(--surface);width:9em;min-width:0}
+.floorhead{padding:8px 16px;font-size:.8rem;font-weight:600;letter-spacing:.06em;color:var(--muted);background:var(--bg);border-top:1px solid var(--line)}
+.floorhead:first-child{border-top:0;border-radius:14px 14px 0 0}
+
+.pill{display:inline-block;padding:1px 10px;border-radius:999px;font-size:.82rem;font-weight:600}
+.pill.due{background:var(--bad-bg);color:var(--crimson)}
+.pill.paid{background:var(--good-bg);color:var(--good)}
+.pill.base{background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+.pill.warn{background:var(--warn-bg);color:var(--warn)}
+
+.btn{border:1px solid var(--line);background:var(--surface);padding:7px 14px;border-radius:10px;font-weight:600;font-size:.95rem;color:var(--ink)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);padding:14px 18px;font-size:1.1rem}
+.btn.danger{color:var(--crimson);border-color:var(--crimson)}
+.btn:disabled{opacity:.5;cursor:default}
+.btn.block{width:100%}
+.link{background:none;border:0;color:var(--muted);text-decoration:underline;padding:4px;font-size:.9rem}
+
+.drum{display:inline-flex;gap:2px;padding:3px;background:var(--drum);border-radius:5px;vertical-align:middle}
+.drum span{font-family:var(--f-num);font-weight:600;color:var(--drum-ink);width:1.05em;text-align:center;font-size:1rem;line-height:1.5}
+.drum span.t{background:var(--red-drum)}
+.drum.sm span{font-size:.85rem}
+
+.step{padding:16px;display:flex;flex-direction:column;gap:14px}
+.pick{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;border:2px dashed var(--line);border-radius:14px;padding:30px 12px;text-align:center;cursor:pointer;background:var(--bg)}
+.pick b{font-size:1.15rem}
+.thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:8px}
+.thumbs figure{margin:0;position:relative}
+.thumbs img{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:8px;display:block;border:1px solid var(--line)}
+.thumbs button{position:absolute;top:4px;right:4px;border:0;border-radius:999px;width:30px;height:30px;background:#000a;color:#fff;font-size:1.1rem;line-height:1}
+.progress{display:flex;align-items:center;gap:10px;color:var(--muted)}
+.spin{width:18px;height:18px;border:3px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:sp 1s linear infinite;flex:none}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spin{animation:none}}
+
+.hgroup h3{font-size:1rem;padding:12px 16px 4px}
+.hrow{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:10px 16px;border-top:1px solid var(--line)}
+.hrow .mid{min-width:0}
+.hrow .mid p{font-size:.88rem;color:var(--muted)}
+.hrow .right{text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.histtools{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;padding:12px 16px;border-bottom:1px solid var(--line)}
+select{padding:6px 8px;border-radius:8px;border:1px solid var(--line);background:var(--bg)}
+
+.lightbox{position:fixed;inset:0;background:#000d;display:flex;align-items:center;justify-content:center;z-index:20;
+  padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.lightbox img{max-height:100%;max-width:100%;border-radius:8px}
+.lightbox .panel{max-width:520px;width:100%}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-weight:600;z-index:30;max-width:calc(100% - 32px)}
+.empty{padding:24px 16px;text-align:center;color:var(--muted)}
+textarea,input.field{width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--bg);font-family:var(--f-num);font-size:.95rem}
+footer{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;color:var(--muted);font-size:.85rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>घर हिसाब</h1>
+      <p class="muted small">बिजुली बिल · काठमाडौं</p>
+    </div>
+    <div class="today">आज<b id="todayBs">—</b></div>
+  </header>
+
+  <!-- SETUP (first time on a phone) -->
+  <section id="view-setup" hidden>
+    <div class="panel step">
+      <h2>पहिलो पटक मात्र</h2>
+      <p class="muted small">यो फोनमा रेकर्ड हेर्न र फोटो पठाउन GitHub साँचो (access key) राख्नुहोस्। यो काम Sashwot ले एक पटक गर्ने हो।</p>
+      <label for="keyInput" class="small">GitHub साँचो</label>
+      <textarea id="keyInput" rows="3" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="github_pat_…"></textarea>
+      <button class="btn primary block" id="keySave">जाँचेर राख्नुहोस्</button>
+      <p id="keyMsg" class="small" hidden></p>
+    </div>
+  </section>
+
+  <div id="app" hidden>
+    <nav class="tabs" role="tablist">
+      <button role="tab" aria-selected="true" data-view="bills">बिल</button>
+      <button role="tab" aria-selected="false" data-view="send">फोटो पठाउनुहोस्</button>
+      <button role="tab" aria-selected="false" data-view="history">रेकर्ड</button>
+    </nav>
+
+    <div class="notices" id="notices" style="margin-top:14px"></div>
+
+    <section id="view-bills" class="view" style="margin-top:14px">
+      <div class="panel summary">
+        <div>
+          <p class="muted small">जम्मा बाँकी</p>
+          <p class="big num" id="totalDue">—</p>
+          <p class="muted small" id="lastDate"></p>
+        </div>
+        <button class="btn" id="refreshBtn">ताजा गर्नुहोस्</button>
+      </div>
+      <div class="panel" style="margin-top:12px"><ul class="people" id="people"><li class="empty">लोड हुँदैछ…</li></ul></div>
+    </section>
+
+    <section id="view-send" class="view" hidden style="margin-top:14px">
+      <div class="panel" id="sendPanel"></div>
+    </section>
+
+    <section id="view-history" class="view" hidden style="margin-top:14px">
+      <div class="panel">
+        <div class="histtools">
+          <select id="histFilter" aria-label="कसको रेकर्ड"></select>
+          <span class="muted small" id="histCount"></span>
+        </div>
+        <div id="history"><p class="empty">लोड हुँदैछ…</p></div>
+      </div>
+    </section>
+
+    <section id="view-settings" class="view" hidden style="margin-top:14px">
+      <div class="panel step">
+        <h2>सेटिङ</h2>
+        <label class="small" for="rateInput">बिजुली दर (रु प्रति युनिट) — अबका बिलमा लागू हुन्छ</label>
+        <div style="display:flex;gap:8px"><input id="rateInput" class="field" type="number" inputmode="decimal" min="0" step="0.5" style="max-width:8em"><button class="btn" id="rateSave">राख्नुहोस्</button></div>
+        <p class="small muted">GitHub साँचो यो फोनमा राखिएको छ। फेर्नुपरे तल थिच्नुहोस्।</p>
+        <button class="btn danger" id="keyReset">साँचो फेर्नुहोस्</button>
+        <button class="btn" id="settingsBack">फर्कनुहोस्</button>
+      </div>
+    </section>
+
+    <footer style="margin-top:18px"><span id="syncInfo"></span><button class="link" id="settingsBtn">सेटिङ</button></footer>
+  </div>
+</div>
+<input type="file" id="fileInput" accept="image/*" multiple hidden>
+
+<script>
+/* ---------- config ---------- */
+const OWNER = "Sedhai1", REPO = "ghar-hisab-data", BRANCH = "main";
+const API = `https://api.github.com/repos/${OWNER}/${REPO}`;
+
+/* ---------- Nepali (BS) date — month lengths cross-checked day by day against two libraries, 2080–2090 ---------- */
+const BS_MONTHS = {2080:[31,32,31,32,31,30,30,30,29,29,30,30],2081:[31,32,31,32,31,30,30,30,29,30,29,31],
+  2082:[31,31,32,31,31,31,30,29,30,29,30,30],2083:[31,31,32,31,31,31,30,29,30,29,30,30],
+  2084:[31,31,32,31,31,30,30,30,29,30,30,30],2085:[31,32,31,32,30,31,30,30,29,30,30,30],
+  2086:[30,32,31,32,31,30,30,30,29,30,30,30],2087:[31,31,32,31,31,31,30,30,29,30,30,30],
+  2088:[30,31,32,32,30,31,30,30,29,30,30,30],2089:[30,32,31,32,31,30,30,30,29,30,30,30],
+  2090:[30,32,31,32,31,30,30,30,29,30,30,29]};
+const BS_ANCHOR = Date.UTC(2023,3,14); // 2080 Baisakh 1
+const MONTH_NE = ["बैशाख","जेठ","असार","साउन","भदौ","असोज","कात्तिक","मंसिर","पुस","माघ","फागुन","चैत"];
+const DEV = "०१२३४५६७८९";
+const toDev = s => String(s).replace(/[0-9]/g, d => DEV[d]);
+function bsFromIso(iso){
+  if (!iso) return null;
+  const [y,m,d] = iso.split("-").map(Number);
+  let days = Math.round((Date.UTC(y,m-1,d) - BS_ANCHOR)/864e5);
+  if (days < 0) return null;
+  for (let by=2080; BS_MONTHS[by]; by++) for (let i=0;i<12;i++){
+    const len = BS_MONTHS[by][i];
+    if (days < len) return { y:by, m:i+1, d:days+1 };
+    days -= len;
+  }
+  return null;
+}
+function bsLabel(iso){ if(!iso) return "मिति थाहा छैन"; const b = bsFromIso(iso); return b ? toDev(`${b.y} `) + MONTH_NE[b.m-1] + " " + toDev(b.d) : iso; }
+function bsKey(iso){ const b = bsFromIso(iso); return b ? `${b.y}-${String(b.m).padStart(2,"0")}-${String(b.d).padStart(2,"0")}` : null; }
+function ktmIso(date=new Date()){ return new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Kathmandu",year:"numeric",month:"2-digit",day:"2-digit"}).format(date); }
+function ktmTime(date=new Date()){ return new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Kathmandu",hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false}).format(date).replace(/:/g,""); }
+
+/* ---------- helpers ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const whole = x => Math.floor(Number(x) + 1e-9);   // bills count only the black wheels
+const fmt1 = x => (x==null||isNaN(x)) ? "—" : Number(x).toFixed(1);
+const rs = x => (x==null||isNaN(x)) ? "—" : "रु " + Math.round(x).toLocaleString("en-IN");
+function drum(v, sm){
+  if (v==null || isNaN(v)) return `<span class="muted">—</span>`;
+  const s = Number(v).toFixed(1).replace(".","").padStart(6,"0").slice(-6);
+  return `<span class="drum${sm?" sm":""}" aria-label="${fmt1(v)} kWh">` + [...s].map((c,i)=>`<span class="${i===5?"t":""}">${c}</span>`).join("") + `</span>`;
+}
+let toastTimer;
+function toast(msg){ let t=$(".toast"); if(!t){t=document.createElement("div");t.className="toast";t.setAttribute("role","status");document.body.append(t);} t.textContent=msg; t.hidden=false; clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.hidden=true,2800); }
+const store = { get(k){ try{return localStorage.getItem(k);}catch(e){return null;} }, set(k,v){ try{localStorage.setItem(k,v);}catch(e){} }, del(k){ try{localStorage.removeItem(k);}catch(e){} } };
+
+/* ---------- GitHub ---------- */
+class GhError extends Error{ constructor(status, msg){ super(msg); this.status=status; } }
+function key(){ return store.get("gh-key"); }
+async function gh(path, {method="GET", body, raw=false, k=key()}={}){
+  let res;
+  try{
+    res = await fetch(`${API}/${path}`, { method, cache:"no-store",
+      headers:{ "Authorization":`Bearer ${k}`, "Accept": raw ? "application/vnd.github.raw+json" : "application/vnd.github+json",
+        "X-GitHub-Api-Version":"2022-11-28", ...(body?{"Content-Type":"application/json"}:{}) },
+      body: body ? JSON.stringify(body) : undefined });
+  }catch(e){ throw new GhError(0, "network"); }
+  if (!res.ok) throw new GhError(res.status, await res.text().catch(()=>""));
+  return raw ? res.blob() : res.json();
+}
+function b64ToUtf8(b64){ const bin = atob(b64.replace(/\s/g,"")); const bytes = new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i); return new TextDecoder().decode(bytes); }
+function utf8ToB64(str){ const bytes = new TextEncoder().encode(str); let bin=""; for(let i=0;i<bytes.length;i+=0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i,i+0x8000)); return btoa(bin); }
+function blobToB64(blob){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(String(r.result).split(",")[1]); r.onerror=rej; r.readAsDataURL(blob); }); }
+async function getLedger(){ const f = await gh(`contents/ledger.json?ref=${BRANCH}`); return { L: JSON.parse(b64ToUtf8(f.content)), sha: f.sha }; }
+async function putFile(path, b64, message, sha){ return gh(`contents/${path}`, {method:"PUT", body:{message, content:b64, branch:BRANCH, ...(sha?{sha}:{})}}); }
+async function listUploads(){ try{ const a = await gh(`contents/uploads?ref=${BRANCH}`); return a.filter(x=>x.type==="dir").map(x=>x.name); }catch(e){ if(e.status===404) return []; throw e; } }
+const photoCache = new Map();
+async function photoUrl(path){
+  if (!path) return null;
+  if (!photoCache.has(path)) photoCache.set(path, gh(`contents/${path.split("/").map(encodeURIComponent).join("/")}?ref=${BRANCH}`, {raw:true}).then(b=>URL.createObjectURL(b)).catch(e=>{ photoCache.delete(path); throw e; }));
+  return photoCache.get(path);
+}
+/* write the ledger: re-read, apply the change, write with sha; retry if someone else wrote in between */
+async function saveLedger(change, message){
+  for (let i=0;i<3;i++){
+    const { L, sha } = await getLedger();
+    const ok = change(L); if (ok===false) return false;
+    try{ const r = await putFile("ledger.json", utf8ToB64(JSON.stringify(L,null,1)+"\n"), message, sha); S.L = L; S.sha = r.content.sha; cacheLedger(); render(); return true; }
+    catch(e){ if (e.status===409 || e.status===422) continue; throw e; }
+  }
+  throw new GhError(409,"conflict");
+}
+function errText(e){
+  if (e?.status===0) return "इन्टरनेट छैन जस्तो छ। जडान जाँचेर फेरि प्रयास गर्नुहोस्।";
+  if (e?.status===401) return "GitHub साँचो चलेन (म्याद सकियो वा गलत)। Sashwot लाई भन्नुहोस्।";
+  if (e?.status===403 || e?.status===404) return "यो साँचोले रेकर्ड खोल्न पाएन। Sashwot लाई भन्नुहोस्।";
+  return "केही मिलेन। केही बेरपछि फेरि प्रयास गर्नुहोस्।";
+}
+
+/* ---------- state ---------- */
+const S = { L:null, sha:null, uploads:[], view:"bills", loadedAt:null };
+const today = ktmIso();
+$("#todayBs").textContent = bsLabel(today);
+function cacheLedger(){ store.set("ledger-cache", JSON.stringify({L:S.L, at:Date.now()})); }
+const tenants = () => S.L?.tenants || [];
+const T = id => tenants().find(t=>t.id===id) || {id, ne:id, floor:""};
+const elec = () => (S.L?.readings||[]).filter(r=>(r.kind||"electricity")==="electricity");
+const byTime = (a,b) => (a.ad||"").localeCompare(b.ad||"") || (a.createdAt||"").localeCompare(b.createdAt||"");  // undated (old paid-off) readings sort first
+const forT = id => elec().filter(r=>r.tenant===id).sort(byTime);
+const latest = id => { const l=forT(id); return l[l.length-1]||null; };
+const unpaid = id => forT(id).filter(r=>!r.baseline && !r.paid && r.amount!=null);
+const pendingUploads = () => S.uploads.filter(u=>!(S.L?.uploads||{})[u]);
+
+/* ---------- tabs ---------- */
+document.querySelectorAll("nav.tabs button").forEach(b=>b.onclick=()=>show(b.dataset.view));
+function show(v){
+  S.view=v;
+  document.querySelectorAll("nav.tabs button").forEach(b=>b.setAttribute("aria-selected", b.dataset.view===v));
+  ["bills","send","history","settings"].forEach(x=>$("#view-"+x).hidden = x!==v);
+  render();
+  window.scrollTo(0,0);
+}
+$("#settingsBtn").onclick=()=>show("settings");
+$("#settingsBack").onclick=()=>show("bills");
+
+function render(){
+  if (!S.L) return;
+  renderNotices();
+  if (S.view==="bills") renderBills();
+  if (S.view==="send") renderSend();
+  if (S.view==="history") renderHistory();
+  if (S.view==="settings") $("#rateInput").value = S.L.rates.electricity;
+  $("#syncInfo").textContent = S.loadedAt ? `अपडेट: ${new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Kathmandu",hour:"2-digit",minute:"2-digit"}).format(S.loadedAt)}` : "पुरानो डाटा देखाउँदै";
+}
+
+/* ---------- notices: pending / failed / missing ---------- */
+function renderNotices(){
+  const n = [], ups = S.L.uploads || {};
+  const p = pendingUploads();
+  if (p.length) n.push(`<div class="notice"><span class="spin"></span><span>${toDev(p.length)} पटक पठाएका फोटो Claude ले पढ्न बाँकी। करिब २ घण्टाभित्र बिल आउँछ।</span></div>`);
+  const recent = Object.entries(ups).filter(([id,u])=>u.processedAt && (Date.now()-Date.parse(u.processedAt)) < 5*864e5).sort((a,b)=>b[1].processedAt.localeCompare(a[1].processedAt));
+  const last = recent[0];
+  if (last){
+    const [, u] = last;
+    if (u.status==="failed") n.push(`<div class="notice bad"><span>फोटो पढ्न सकिएन${u.notes?.length?": "+esc(u.notes.join("; ")):""}। कृपया नजिकबाट, उज्यालोमा फेरि खिचेर पठाउनुहोस्।</span></div>`);
+    else if (u.missing?.length) n.push(`<div class="notice"><span>${u.missing.map(id=>esc(T(id).ne)).join(", ")} को मिटर फोटोमा भेटिएन। त्यो मिटरको फोटो फेरि पठाउनुहोस्।</span></div>`);
+  }
+  $("#notices").innerHTML = n.join("");
+}
+
+/* ---------- bills ---------- */
+function billText(t){
+  const l = latest(t.id); if(!l) return "";
+  const lines = [`${t.ne} — बिजुली बिल`, `मिति: ${bsLabel(l.ad)}`];
+  if (l.baseline) { lines.push(`मिटर रिडिङ: ${whole(l.value)}`); return lines.join("\n"); }
+  lines.push(`अघिल्लो: ${whole(l.prev)}  |  अहिले: ${whole(l.value)}`);
+  lines.push(`खपत: ${l.units} युनिट × रु ${l.rate} = ${rs(l.amount)}`);
+  const older = unpaid(t.id).filter(r=>r!==l);
+  if (older.length){ const o=older.reduce((s,r)=>s+r.amount,0); lines.push(`पुरानो बाँकी: ${rs(o)}`); lines.push(`जम्मा: ${rs(o + (l.paid?0:l.amount))}`); }
+  return lines.join("\n");
+}
+const openCheck = new Set();
+function renderBills(){
+  let total=0, lastAd=null, html="", floor=null;
+  for (const t of tenants()){
+    if (t.floor!==floor){ floor=t.floor; html += `<li class="floorhead">${esc(floor)}</li>`; }
+    const l = latest(t.id);
+    const due = unpaid(t.id).reduce((s,r)=>s+r.amount,0); total += due;
+    if (l?.ad && (!lastAd || l.ad>lastAd)) lastAd=l.ad;
+    const flagged = l && l.flags?.length && !l.confirmed;
+    let pill, calc, amt;
+    if (!l){ pill=`<span class="pill base">रिडिङ छैन</span>`; calc="अहिलेसम्म रिडिङ छैन।"; amt="—"; }
+    else if (l.baseline){ pill=l.paid?`<span class="pill paid">तिरेको</span>`:`<span class="pill base">सुरुको रिडिङ</span>`; calc=`${bsLabel(l.ad)} को रिडिङ। अर्को रिडिङदेखि बिल बन्छ।`; amt="—"; }
+    else if (l.amount==null){ pill=`<span class="pill warn">जाँच्नुहोस्</span>`; calc=`${bsLabel(l.ad)}: अंक अघिल्लोभन्दा कम देखियो।`; amt="—"; }
+    else {
+      pill = flagged ? `<span class="pill warn">जाँच्नुहोस्</span>` : due>0 ? `<span class="pill due">बाँकी</span>` : `<span class="pill paid">तिरेको</span>`;
+      calc = `${bsLabel(l.ad)}: <span class="num">${whole(l.value)} − ${whole(l.prev)} = ${l.units}</span> युनिट × रु ${esc(l.rate)} = ${rs(l.amount)}`;
+      amt = rs(due>0 ? due : l.amount);
+    }
+    const olderDue = l ? unpaid(t.id).filter(r=>r!==l).reduce((s,r)=>s+r.amount,0) : 0;
+    const showCheck = l && (flagged || l.amount==null && !l.baseline || openCheck.has(t.id));
+    html += `<li class="person" data-t="${esc(t.id)}">
+      <div class="who"><h3>${esc(t.ne)}</h3><div style="margin-top:4px">${drum(l?.value)}</div></div>
+      <div class="amt"><div class="rs num">${amt}</div><div style="margin-top:4px">${pill}</div></div>
+      <p class="calc">${calc}${olderDue?` · <b style="color:var(--crimson)">पुरानो बाँकी ${rs(olderDue)}</b>`:""}</p>
+      ${showCheck ? `<div class="check">
+        ${(l.flags||[]).map(f=>`<span class="small">⚠︎ ${esc(f)}</span>`).join("")}
+        ${l.crop||l.photo ? `<img alt="${esc(t.ne)} को मिटर" data-photo="${esc(l.crop||l.photo)}" data-full="${esc(l.photo||"")}">` : ""}
+        <span class="small">फोटोमा कालो अंक र यो नम्बर मिल्छ?</span>
+        <div class="edit"><input type="text" inputmode="decimal" id="fix-${esc(t.id)}" value="${fmt1(l.value)}" aria-label="सही रिडिङ">
+          <button class="btn" data-fix="${esc(t.id)}">सच्याउनुहोस्</button>
+          ${flagged?`<button class="btn" data-ok="${esc(t.id)}">ठीक छ</button>`:""}</div>
+      </div>`:""}
+      ${l && !l.baseline ? `<div class="row-actions">
+        ${!flagged && due>0 ? `<button class="btn" data-paid="${esc(t.id)}">तिरेको ✓ (${rs(due)})</button>` : !flagged && lastBatch(t.id) ? `<button class="btn" data-paid="${esc(t.id)}">बाँकीमा फर्काउनुहोस्</button>` : ""}
+        ${l.amount!=null ? `<button class="btn" data-copy="${esc(t.id)}">सन्देश कपी</button>`:""}
+        ${!showCheck ? `<button class="link" data-open="${esc(t.id)}">अंक सच्याउनुहोस्</button>`:""}
+      </div>`:""}
+    </li>`;
+  }
+  const ul = $("#people"); ul.innerHTML = html || `<li class="empty">कोही छैन।</li>`;
+  $("#totalDue").textContent = rs(total);
+  $("#lastDate").textContent = lastAd ? `पछिल्लो रिडिङ: ${bsLabel(lastAd)}` : "";
+  ul.querySelectorAll("img[data-photo]").forEach(loadImg);
+  ul.querySelectorAll("[data-paid]").forEach(b=>b.onclick=()=>togglePaid(b.dataset.paid,b));
+  ul.querySelectorAll("[data-copy]").forEach(b=>b.onclick=()=>copyText(billText(T(b.dataset.copy))));
+  ul.querySelectorAll("[data-open]").forEach(b=>b.onclick=()=>{openCheck.add(b.dataset.open); renderBills();});
+  ul.querySelectorAll("[data-ok]").forEach(b=>b.onclick=()=>fixReading(b.dataset.ok, null, b));
+  ul.querySelectorAll("[data-fix]").forEach(b=>b.onclick=()=>fixReading(b.dataset.fix, $("#fix-"+b.dataset.fix).value, b));
+}
+function loadImg(img){
+  photoUrl(img.dataset.photo).then(u=>{ img.src=u; }).catch(()=>{ img.alt="फोटो खुलेन"; });
+  img.style.cursor="zoom-in";
+  img.onclick=()=>{ const p = img.dataset.full || img.dataset.photo; photoUrl(p).then(zoom).catch(()=>toast("फोटो खुलेन")); };
+}
+/* "paid" settles everything the tenant owes; undo reverses that one settlement */
+const lastBatch = tid => forT(tid).map(r=>r.paidBatch).filter(Boolean).sort().pop() || null;
+async function togglePaid(tid, btn){
+  const due = unpaid(tid); btn.disabled=true;
+  try{
+    if (due.length){
+      const ids = new Set(due.map(r=>r.id)), batch = `${today}-${Date.now()}`, sum = due.reduce((s,r)=>s+r.amount,0);
+      await saveLedger(L=>{ let n=0; for (const r of L.readings) if (ids.has(r.id) && !r.paid){ r.paid=true; r.paidOn=today; r.paidBatch=batch; n++; } if(!n) return false; }, `${tid}: paid Rs ${sum} ${today}`);
+      toast("तिरेको भनी राखियो");
+    } else {
+      const b = lastBatch(tid); if (!b){ btn.disabled=false; return; }
+      await saveLedger(L=>{ for (const r of L.readings) if (r.tenant===tid && r.paidBatch===b){ r.paid=false; r.paidOn=null; delete r.paidBatch; } }, `${tid}: payment ${b} undone`);
+      toast("बाँकीमा फर्काइयो");
+    }
+  }catch(e){ toast(errText(e)); btn.disabled=false; }
+}
+async function fixReading(tid, raw, btn){
+  const l = latest(tid); if(!l) return;
+  let v = null;
+  if (raw!=null){
+    v = Number(String(raw).trim().replace(",","."));
+    if (!isFinite(v) || v<0){ toast("अंक मिलेन"); return; }
+    v = Math.round(v*10)/10;
+    if (l.prev!=null && v < l.prev){ toast(`अघिल्लो रिडिङ (${whole(l.prev)}) भन्दा कम हुन सक्दैन`); return; }
+  }
+  btn.disabled=true;
+  try{
+    await saveLedger(L=>{
+      const r=L.readings.find(x=>x.id===l.id); if(!r) return false;
+      if (v!=null && v!==r.value){
+        r.value=v; r.edited=true;
+        if (r.prev!=null){ r.units = whole(v)-whole(r.prev); r.amount = r.units*r.rate; }
+      }
+      r.confirmed=true; r.confirmedOn=today;
+    }, `${tid}: reading ${v!=null?"corrected to "+v:"confirmed"} ${today}`);
+    openCheck.delete(tid); toast(v!=null && v!==l.value ? "सच्याइयो" : "ठीक छ भनी राखियो");
+  }catch(e){ toast(errText(e)); btn.disabled=false; }
+}
+async function copyText(t){
+  try{ await navigator.clipboard.writeText(t); toast("कपी भयो — Viber/WhatsApp मा पेस्ट गर्नुहोस्"); }
+  catch(e){
+    const box=document.createElement("div"); box.className="lightbox";
+    box.innerHTML=`<div class="panel step"><p>तलको सन्देश थिचेर कपी गर्नुहोस्:</p><textarea rows="7"></textarea><button class="btn primary">बन्द</button></div>`;
+    document.body.append(box); const ta=box.querySelector("textarea"); ta.value=t; ta.select(); box.querySelector("button").onclick=()=>box.remove();
+  }
+}
+function zoom(src){ const lb=document.createElement("div"); lb.className="lightbox"; lb.innerHTML=`<img alt="फोटो" src="${esc(src)}">`; lb.onclick=()=>lb.remove(); document.body.append(lb); }
+
+/* ---------- send photos ---------- */
+const U = { files:[], urls:[], phase:"pick", done:0, msg:"" };
+$("#fileInput").addEventListener("change", e=>{
+  for (const f of e.target.files){ U.files.push(f); U.urls.push(URL.createObjectURL(f)); }
+  e.target.value=""; U.phase="pick"; U.msg=""; renderSend();
+});
+function resetSend(){ U.urls.forEach(u=>URL.revokeObjectURL(u)); U.files=[]; U.urls=[]; U.phase="pick"; U.done=0; U.msg=""; }
+function renderSend(){
+  const p = $("#sendPanel");
+  if (U.phase==="sent"){
+    p.innerHTML = `<div class="step"><h2>पठाइयो ✓</h2><p>Claude ले करिब २ घण्टाभित्र फोटो पढेर बिल बनाउँछ। ‘बिल’ मा हेर्नुहोस्।</p>
+      <button class="btn primary block" id="toBills">बिल हेर्नुहोस्</button></div>`;
+    $("#toBills").onclick=()=>{ resetSend(); show("bills"); }; return;
+  }
+  const busy = U.phase==="sending";
+  p.innerHTML = `<div class="step">
+    <div><h2>मिटरको फोटो</h2><p class="muted small">सबै ५ मिटर आउने गरी फोटो खिच्नुहोस्: माथिल्लो तलाको १, माइला दाइको १, र तल्लो तलाका तीनवटा एउटै फोटोमा। अंक प्रस्ट देखिने गरी नजिकबाट।</p></div>
+    ${U.files.length? `<div class="thumbs">${U.urls.map((u,i)=>`<figure><img src="${u}" alt="फोटो ${i+1}">${busy?"":`<button aria-label="हटाउनुहोस्" data-rm="${i}">×</button>`}</figure>`).join("")}</div>`:""}
+    ${busy?"":`<label class="pick" for="fileInput" tabindex="0" id="pickLbl"><b>${U.files.length?"अरू फोटो थप्नुहोस्":"फोटो खिच्नुहोस् वा छान्नुहोस्"}</b><span class="muted small">आजको मिति: ${bsLabel(today)}</span></label>`}
+    ${U.msg?`<div class="notice bad">${esc(U.msg)}</div>`:""}
+    ${busy ? `<div class="progress"><span class="spin"></span><span>पठाउँदै… ${toDev(U.done)}/${toDev(U.files.length)}</span></div>`
+           : `<button class="btn primary block" id="sendBtn" ${U.files.length?"":"disabled"}>पठाउनुहोस् →</button>`}
+  </div>`;
+  p.querySelectorAll("[data-rm]").forEach(b=>b.onclick=()=>{ const i=+b.dataset.rm; URL.revokeObjectURL(U.urls[i]); U.files.splice(i,1); U.urls.splice(i,1); renderSend(); });
+  const lbl=$("#pickLbl"); if(lbl) lbl.onkeydown=e=>{ if(e.key==="Enter"||e.key===" "){e.preventDefault();$("#fileInput").click();} };
+  $("#sendBtn") && ($("#sendBtn").onclick = send);
+}
+function shrink(file){
+  return new Promise((res,rej)=>{
+    const img = new Image(), u = URL.createObjectURL(file);
+    img.onload = ()=>{ const k=Math.min(1, 2000/Math.max(img.naturalWidth,img.naturalHeight));
+      const c=document.createElement("canvas"); c.width=Math.round(img.naturalWidth*k); c.height=Math.round(img.naturalHeight*k);
+      c.getContext("2d").drawImage(img,0,0,c.width,c.height); URL.revokeObjectURL(u); c.toBlob(b=>b?res(b):rej(new Error("encode")),"image/jpeg",0.88); };
+    img.onerror = ()=>{ URL.revokeObjectURL(u); rej(new Error("decode")); };
+    img.src = u;
+  });
+}
+async function send(){
+  U.phase="sending"; U.done=0; U.msg=""; renderSend();
+  const id = `${today}-${ktmTime()}-${Math.random().toString(36).slice(2,6)}`;
+  try{
+    for (let i=0;i<U.files.length;i++){
+      const blob = await shrink(U.files[i]);
+      await putFile(`uploads/${id}/${i+1}.jpg`, await blobToB64(blob), `photo ${i+1} for ${id}`);
+      U.done=i+1; renderSend();
+    }
+    // meta.json last: its presence tells the reader the upload is complete
+    const meta = { ad: today, bs: bsKey(today), count: U.files.length, createdAt: new Date().toISOString() };
+    await putFile(`uploads/${id}/meta.json`, utf8ToB64(JSON.stringify(meta,null,1)), `upload ${id} complete`);
+    S.uploads.push(id); U.phase="sent"; renderSend(); renderNotices();
+  }catch(e){ U.phase="pick"; U.msg = e?.status!=null ? errText(e) : "फोटो खुलेन। अर्को फोटो छान्नुहोस्।"; renderSend(); }
+}
+
+/* ---------- history ---------- */
+const hf = $("#histFilter");
+hf.onchange = renderHistory;
+function renderHistory(){
+  if (hf.options.length !== tenants().length+1) hf.innerHTML = `<option value="">सबै</option>` + tenants().map(t=>`<option value="${esc(t.id)}">${esc(t.ne)}</option>`).join("");
+  const list = elec().filter(r=>!hf.value || r.tenant===hf.value).sort(byTime).reverse();
+  $("#histCount").textContent = `${toDev(list.length)} रेकर्ड`;
+  const box = $("#history");
+  if (!list.length){ box.innerHTML = `<p class="empty">कुनै रेकर्ड छैन।</p>`; return; }
+  const groups = new Map();
+  for (const r of list){ const k=r.ad||""; if(!groups.has(k)) groups.set(k,[]); groups.get(k).push(r); }
+  const order = tenants().map(t=>t.id);
+  box.innerHTML = [...groups].map(([ad, rows])=>`<div class="hgroup"><h3>${ad ? `${bsLabel(ad)} <span class="muted small" style="font-weight:400">· ${ad}</span>` : `अघिल्लो तिरिसकेको रिडिङ <span class="muted small" style="font-weight:400">· मिति थाहा छैन</span>`}</h3>
+    ${rows.sort((a,b)=>order.indexOf(a.tenant)-order.indexOf(b.tenant)).map(r=>`<div class="hrow">
+      <div class="mid"><b>${esc(T(r.tenant).ne)}</b> ${drum(r.value,true)}
+        <p>${r.baseline ? (r.paid?"तिरिसकेको रिडिङ":"सुरुको रिडिङ") : r.amount==null ? "अंक जाँच्न बाँकी" : `<span class="num">${whole(r.prev)} → ${whole(r.value)} = ${r.units}</span> युनिट × रु ${esc(r.rate)}`}${r.edited?` · हातले सच्याइएको (Claude: ${fmt1(r.aiValue)})`:""}${r.paid&&r.paidOn?` · तिरेको ${bsLabel(r.paidOn)}`:""}</p>
+        ${r.photo?`<button class="link" data-ph="${esc(r.photo)}">फोटो हेर्नुहोस्</button>`:""}</div>
+      <div class="right">${r.baseline ? (r.paid?`<span class="pill paid">तिरेको</span>`:`<span class="pill base">सुरु</span>`) : `<b class="num">${rs(r.amount)}</b>${r.paid?`<span class="pill paid">तिरेको</span>`:`<span class="pill due">बाँकी</span>`}`}</div>
+    </div>`).join("")}</div>`).join("");
+  box.querySelectorAll("[data-ph]").forEach(b=>b.onclick=()=>{ b.disabled=true; photoUrl(b.dataset.ph).then(zoom).catch(()=>toast("फोटो खुलेन")).finally(()=>b.disabled=false); });
+}
+
+/* ---------- settings ---------- */
+$("#rateSave").onclick = async ()=>{
+  const v = Number($("#rateInput").value);
+  if (!(v>0)) { toast("दर मिलेन"); return; }
+  try{ await saveLedger(L=>{ L.rates.electricity=v; }, `electricity rate ${v}`); toast(`दर रु ${v} राखियो`); }catch(e){ toast(errText(e)); }
+};
+let resetArmed=false;
+$("#keyReset").onclick = ()=>{
+  if (!resetArmed){ resetArmed=true; $("#keyReset").textContent="पक्का? फेरि थिच्नुहोस्"; setTimeout(()=>{resetArmed=false;$("#keyReset").textContent="साँचो फेर्नुहोस्";},4000); return; }
+  store.del("gh-key"); store.del("ledger-cache"); location.reload();
+};
+
+/* ---------- setup ---------- */
+$("#keySave").onclick = async ()=>{
+  const k = $("#keyInput").value.trim(), msg=$("#keyMsg");
+  if (!k){ return; }
+  $("#keySave").disabled=true; msg.hidden=false; msg.textContent="जाँच्दै…";
+  try{ await gh(`contents/ledger.json?ref=${BRANCH}`, {k}); store.set("gh-key", k); msg.textContent="ठीक छ ✓"; boot(); }
+  catch(e){ msg.textContent = errText(e); $("#keySave").disabled=false; }
+};
+
+/* ---------- load ---------- */
+async function refresh(){
+  const btn=$("#refreshBtn"); btn.disabled=true;
+  try{
+    const [{L,sha}, ups] = await Promise.all([getLedger(), listUploads()]);
+    S.L=L; S.sha=sha; S.uploads=ups; S.loadedAt=new Date(); cacheLedger(); render();
+  }catch(e){
+    if (e.status===401){ toast(errText(e)); }
+    if (!S.L) $("#people").innerHTML = `<li class="empty">${esc(errText(e))}</li>`;
+    else toast(errText(e));
+  }finally{ btn.disabled=false; }
+}
+$("#refreshBtn").onclick = refresh;
+document.addEventListener("visibilitychange", ()=>{ if (document.visibilityState==="visible" && key() && S.loadedAt && Date.now()-S.loadedAt > 60e3) refresh(); });
+function boot(){
+  if (!key()){ $("#view-setup").hidden=false; $("#app").hidden=true; return; }
+  $("#view-setup").hidden=true; $("#app").hidden=false;
+  try{ const c = JSON.parse(store.get("ledger-cache")||"null"); if (c?.L){ S.L=c.L; render(); } }catch(e){}
+  refresh();
+}
+boot();
+</script>
+</body>
+</html>
