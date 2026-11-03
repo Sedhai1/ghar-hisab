@@ -258,7 +258,7 @@ async function gh(path, {method="GET", body, raw=false, k=key()}={}){
   try{
     res = await fetch(`${API}/${path}`, { method, cache:"no-store",
       headers:{ "Authorization":`Bearer ${k}`, "Accept": raw ? "application/vnd.github.raw+json" : "application/vnd.github+json",
-        "X-GitHub-Api-Version":"2022-11-28", ...(body?{"Content-Type":"application/json"}:{}) },
+        ...(body?{"Content-Type":"application/json"}:{}) },
       body: body ? JSON.stringify(body) : undefined });
   }catch(e){ throw new GhError(0, "network"); }
   if (!res.ok) throw new GhError(res.status, await res.text().catch(()=>""));
@@ -546,11 +546,15 @@ $("#keyReset").onclick = ()=>{
 
 /* ---------- setup ---------- */
 $("#keySave").onclick = async ()=>{
-  const k = $("#keyInput").value.trim(), msg=$("#keyMsg");
+  const k = $("#keyInput").value.replace(/\s+/g,""), msg=$("#keyMsg");  // a pasted key can carry spaces or line breaks
   if (!k){ return; }
   $("#keySave").disabled=true; msg.hidden=false; msg.textContent="जाँच्दै…";
   try{ await gh(`contents/ledger.json?ref=${BRANCH}`, {k}); store.set("gh-key", k); msg.textContent="ठीक छ ✓"; boot(); }
-  catch(e){ msg.textContent = errText(e); $("#keySave").disabled=false; }
+  catch(e){
+    const why = { 0:"No answer from GitHub (network or browser blocked it)", 401:"GitHub rejected the key: wrong, incomplete or expired",
+      403:"Key has no permission: set Contents to Read and write", 404:"Key cannot see ghar-hisab-data: choose Only select repositories → ghar-hisab-data" }[e.status] || "Unexpected reply";
+    msg.textContent = `${errText(e)} (कोड ${e.status}: ${why})`; $("#keySave").disabled=false;
+  }
 };
 
 /* ---------- load ---------- */
