@@ -333,7 +333,7 @@ function render(){
 function renderNotices(){
   const n = [], ups = S.L.uploads || {};
   const p = pendingUploads();
-  if (p.length) n.push(`<div class="notice"><span class="spin"></span><span>${toDev(p.length)} पटक पठाएका फोटो Claude ले पढ्न बाँकी। करिब २ घण्टाभित्र बिल आउँछ।</span></div>`);
+  if (p.length) n.push(`<div class="notice"><span class="spin"></span><span>${toDev(p.length)} पटक पठाएका फोटो Claude ले पढ्दैछ। केही मिनेटमा बिल आउँछ — ‘ताजा गर्नुहोस्’ थिच्नुहोस्।</span></div>`);
   const recent = Object.entries(ups).filter(([id,u])=>u.processedAt && (Date.now()-Date.parse(u.processedAt)) < 5*864e5).sort((a,b)=>b[1].processedAt.localeCompare(a[1].processedAt));
   const last = recent[0];
   if (last){
@@ -467,7 +467,7 @@ function resetSend(){ U.urls.forEach(u=>URL.revokeObjectURL(u)); U.files=[]; U.u
 function renderSend(){
   const p = $("#sendPanel");
   if (U.phase==="sent"){
-    p.innerHTML = `<div class="step"><h2>पठाइयो ✓</h2><p>Claude ले करिब २ घण्टाभित्र फोटो पढेर बिल बनाउँछ। ‘बिल’ मा हेर्नुहोस्।</p>
+    p.innerHTML = `<div class="step"><h2>पठाइयो ✓</h2><p>Claude ले केही मिनेटमा फोटो पढेर बिल बनाउँछ। ‘बिल’ मा हेर्नुहोस्।</p>
       <button class="btn primary block" id="toBills">बिल हेर्नुहोस्</button></div>`;
     $("#toBills").onclick=()=>{ resetSend(); show("bills"); }; return;
   }
